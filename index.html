@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HK2TL - Hệ Thống Quản Lý & Đặt Vé Rạp Chiếu Phim</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            800: '#9f1239',
+                            900: '#881337',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        .dark ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- HEADER -->
+    <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="app.switchView('home')">
+                <div class="bg-brand-600 text-white font-bold text-xl px-3 py-1.5 rounded-lg shadow-md flex items-center space-x-1">
+                    <i class="fa-solid fa-film"></i>
+                    <span>HK2TL</span>
+                </div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 hidden sm:inline">Việt Nam</span>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+                <button onclick="app.switchView('home')" class="hover:text-brand-600 transition nav-link-home text-brand-600 font-semibold">Trang chủ</button>
+                <button onclick="app.switchView('movies')" class="hover:text-brand-600 transition nav-link-movies">Phim Đang Chiếu</button>
+                <button onclick="app.switchView('events')" class="hover:text-brand-600 transition nav-link-events">Sự Kiện & Ưu Đãi</button>
+                <button onclick="app.switchView('news')" class="hover:text-brand-600 transition nav-link-news">Góc Điện Ảnh</button>
+            </nav>
+
+            <!-- Actions (Theme, Auth, Admin Switch) -->
+            <div class="flex items-center space-x-3">
+                <!-- Theme Toggle -->
+                <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Chuyển chế độ sáng/tối">
+                    <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+
+                <!-- My Tickets (User) -->
+                <button onclick="app.switchView('my-tickets')" class="hidden sm:flex items-center space-x-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-lg transition">
+                    <i class="fa-solid fa-ticket text-brand-600"></i>
+                    <span>Vé Của Tôi</span>
+                </button>
+
+                <!-- Auth / Account status -->
+                <div id="auth-container" class="flex items-center space-x-2">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main id="app-main" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Content injected dynamically via JS -->
+    </main>
+
+    <!-- CUSTOM MODAL & TOAST NOTIFICATION -->
+    <div id="modal-container" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div id="modal-content" class="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl transform transition-all">
+            <!-- Modal inner populated via JS -->
+        </div>
+    </div>
+
+    <!-- QUICK ACCOUNTS HELPER FLOATING BUTTON FOR GITHUB SUBMISSION -->
+    <div class="fixed bottom-6 right-6 z-40">
+        <div class="relative">
+            <button onclick="app.toggleAccountsModal()" class="bg-brand-600 hover:bg-brand-700 text-white p-3.5 rounded-full shadow-2xl flex items-center space-x-2 transition transform hover:scale-105">
+                <i class="fa-solid fa-key text-lg"></i>
+                <span class="text-xs font-bold uppercase tracking-wider hidden md:inline">Tài Khoản</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto py-8 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
+            <div>
+                <div class="bg-brand-600 text-white font-bold text-lg px-3 py-1.5 rounded-lg inline-flex items-center space-x-1 mb-3">
+                    <i class="fa-solid fa-film"></i>
+                    <span>HK2TL</span>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400">Hệ thống rạp chiếu phim hiện đại hàng đầu với công nghệ âm thanh hình ảnh tối tân nhất.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-3">Phạm Dạng Chiếu</h4>
+                <ul class="space-y-2 text-gray-500 dark:text-gray-400">
+                    <li><a href="#" onclick="app.switchView('movies')" class="hover:text-brand-600">Phim Đang Chiếu</a></li>
+                    <li><a href="#" onclick="app.switchView('movies')" class="hover:text-brand-600">Phim Sắp Chiếu</a></li>
+                    <li><a href="#" onclick="app.switchView('movies')" class="hover:text-brand-600">Suất Chiếu Đặc Biệt</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-3">Góc Điện Ảnh</h4>
+                <ul class="space-y-2 text-gray-500 dark:text-gray-400">
+                    <li><a href="#" onclick="app.switchView('news')" class="hover:text-brand-600">Review Phim</a></li>
+                    <li><a href="#" onclick="app.switchView('events')" class="hover:text-brand-600">Khuyến Mãi & Sự Kiện</a></li>
+                    <li><a href="#" onclick="app.switchView('news')" class="hover:text-brand-600">Blog Điện Ảnh</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-3">Hỗ Trợ & Liên Hệ</h4>
+                <p class="text-gray-500 dark:text-gray-400 mb-2"><i class="fa-solid fa-phone mr-2 text-brand-600"></i> Hotline: 1900 1234</p>
+                <p class="text-gray-500 dark:text-gray-400 mb-2"><i class="fa-solid fa-envelope mr-2 text-brand-600"></i> support@HK2TL.com</p>
+                <p class="text-xs text-gray-400 mt-4">&copy; 2026 HK2TL. All rights reserved. Designed for GitHub Source Release.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- APPLICATION SCRIPT -->
+    <script>
+        const defaultState = {
+            currentTheme: 'light',
+            currentView: 'home',
+            currentUser: {
+                id: 1,
+                name: 'Admin',
+                email: 'admin@HK2TL.com',
+                role: 'Quản lý',
+                status: 'Hoạt động'
+            },
+            virtualAccounts: [
+                { id: 1, name: 'Admin Lê Trần Nhật Huy', email: 'admin@gmail.com', role: 'Quản lý', pass: '123456', status: 'Hoạt động', phone: '0123456789', permissions: ['Xem phòng', 'Tạo phòng', 'Xóa phòng', 'Quản lý khách hàng', 'Quản lý phim'] },
+                { id: 2, name: 'Trần Vũ Đăng Khoa', email: 'kangtaemu@gmail.com', role: 'Nhân viên quét dọn', pass: '123456', status: 'Hoạt động', phone: '0332162386', permissions: ['Xem phòng', 'Quản lý phim'] },
+                { id: 3, name: 'Ngô Đoàn Anh Tuấn', email: 'anhtuancutephomaique@gmail.com', role: 'Kế toán', pass: '123456', status: 'Hoạt động', phone: '0935303721', permissions: ['Xem hóa đơn', 'Thống kê doanh thu'] },
+                { id: 4, name: 'Võ Bá Lộc', email: 'Locphat68@gmail.com', role: 'Check-in vé', pass: '123456', status: 'Hoạt động', phone: '0835303721', permissions: ['Check-in vé', 'Xem suất chiếu'] },
+                { id: 5, name: 'Nguyễn Minh Trí', email: 'bakhimarathon@gmail.com', role: 'Check-in dịch vụ', pass: '123456', status: 'Hoạt động', phone: '0999888777', permissions: ['Check-in dịch vụ', 'Xem dịch vụ'] },
+                { id: 6, name: 'Khách Hàng VIP', email: 'khachhang@HK2TL.com', role: 'Khách hàng', pass: '123456', status: 'Hoạt động', phone: '0987654321', permissions: ['Đặt vé', 'Xem lịch sử'] }
+            ],
+            movies: [
+                { id: 1, title: 'The Super Mario Galaxy Movie', slug: 'the-super-mario-galaxy-movie', releaseDate: '2026-04-01', duration: 100, director: 'Aaron Horvath, Michael Jelenic', cast: 'Chris Pratt, Anya Taylor-Joy, Charlie Day', category: 'Hoạt Hình', desc: 'Mario và những người bạn bước vào chuyến phiêu lưu mới giữa các thiên hà.', poster: 'assets/posters/the-super-mario-galaxy-movie.png', status: 'Đã chiếu', rating: 'P' },
+                { id: 2, title: 'Toy Story 5', slug: 'toy-story-5', releaseDate: '2026-06-19', duration: 105, director: 'Andrew Stanton', cast: 'Tom Hanks, Tim Allen, Joan Cusack', category: 'Hoạt Hình', desc: 'Woody, Buzz và nhóm đồ chơi đối mặt với một thế giới trẻ em ngày càng gắn với công nghệ.', poster: 'assets/posters/toy-story-5.png', status: 'Đã chiếu', rating: 'P' },
+                { id: 3, title: 'Supergirl', slug: 'supergirl-2026', releaseDate: '2026-06-26', duration: 125, director: 'Craig Gillespie', cast: 'Milly Alcock, Matthias Schoenaerts, Jason Momoa', category: 'Hành Động', desc: 'Kara Zor-El bước vào hành trình liên hành tinh đầy thử thách trong vũ trụ DC.', poster: 'assets/posters/supergirl-2026.png', status: 'Đã chiếu', rating: 'T13' },
+                { id: 4, title: 'Moana (Live-Action)', slug: 'moana-live-action-2026', releaseDate: '2026-07-10', duration: 120, director: 'Thomas Kail', cast: 'Catherine Lagaʻaia, Dwayne Johnson', category: 'Phiêu Lưu', desc: 'Moana lên đường vượt đại dương để bảo vệ hòn đảo và người dân của mình.', poster: 'assets/posters/moana-live-action-2026.png', status: 'Đã chiếu', rating: 'P' },
+                { id: 5, title: 'Spider-Man: Brand New Day', slug: 'spider-man-brand-new-day', releaseDate: '2026-07-31', duration: 130, director: 'Destin Daniel Cretton', cast: 'Tom Holland, Zendaya', category: 'Hành Động', desc: 'Peter Parker trở lại với một chương mới trong cuộc sống của Người Nhện.', poster: 'assets/posters/spider-man-brand-new-day.png', status: 'Đã chiếu', rating: 'T13' },
+                { id: 6, title: 'Bò Sữa Bay', slug: 'bo-sua-bay', releaseDate: '2026-11-06', duration: 120, director: 'Nguyễn Phạm Thành Đạt', cast: 'Nguyễn Hùng, Ngọc Xuân, Võ Điền Gia Huy, Tiểu Vy, Lãnh Thanh', category: 'Tình Cảm', desc: 'Phim tình cảm, hài và hành động lấy bối cảnh Mộc Châu thập niên 1990, xoay quanh nhóm công nhân và phi vụ đánh cắp công thức sữa bí ẩn.', poster: 'assets/posters/bo-sua-bay.png', status: 'Sắp chiếu', rating: 'P' },
+                { id: 7, title: 'Người Được Chọn', slug: 'nguoi-duoc-chon', releaseDate: '2026-11-06', duration: 120, director: 'Mai Thế Hiệp, Nguyễn Tôn Anh Quân', cast: 'Đang cập nhật', category: 'Tâm Lý', desc: 'Phim khai thác tín ngưỡng thờ Mẫu và thế giới hầu đồng, xoay quanh niềm tin, danh phận và những lựa chọn nhiều đánh đổi.', poster: 'assets/posters/nguoi-duoc-chon.png', status: 'Sắp chiếu', rating: 'T13' },
+                { id: 8, title: 'Trại Giam Hạnh Phúc', slug: 'trai-giam-hanh-phuc', releaseDate: '2026-11-20', duration: 120, director: 'Nguyễn Nhất Trung', cast: 'Tuấn Trần, Ma Ran Đô, Lương Thế Thành', category: 'Chính Kịch', desc: 'Thầy giáo Phúc bị kết án tù và phải thích nghi với cuộc sống sau song sắt, nơi nhiều bí mật dần được hé lộ.', poster: 'assets/posters/trai-giam-hanh-phuc.png', status: 'Sắp chiếu', rating: 'T13' }
+            ],
+            showtimes: [
+                { id: 1, movieId: 6, room: 'Phòng 1', date: '2026-11-06', time: '10:00', format: '2D', price: 75000, status: 'Sắp chiếu' },
+                { id: 2, movieId: 6, room: 'Phòng 2', date: '2026-11-06', time: '19:30', format: '2D', price: 85000, status: 'Sắp chiếu' },
+                { id: 3, movieId: 7, room: 'Phòng 3', date: '2026-11-06', time: '14:00', format: '2D', price: 75000, status: 'Sắp chiếu' },
+                { id: 4, movieId: 8, room: 'Phòng 4', date: '2026-11-20', time: '19:00', format: '2D', price: 75000, status: 'Sắp chiếu' }
+            ],
+            rooms: [
+                { id: 1, name: 'Phòng 1', seats: 60, type: 'Thường & VIP', status: 'Hoạt động' },
+                { id: 2, name: 'Phòng 2 (IMAX)', seats: 80, type: 'IMAX Deluxe', status: 'Hoạt động' },
+                { id: 3, name: 'Phòng 3 (CineComfort)', seats: 45, type: 'Giường nằm', status: 'Hoạt động' },
+                { id: 4, name: 'Phòng 4 (Charlotte)', seats: 50, type: 'VIP Sofa', status: 'Hoạt động' },
+                { id: 5, name: 'Phòng 5', seats: 60, type: 'Thường', status: 'Hoạt động' }
+            ],
+            categories: [
+                { id: 1, name: 'Hành Động', desc: 'Phim bom tấn kỹ xảo mãn nhãn' },
+                { id: 2, name: 'Hài Kịch', desc: 'Giây phút thư giãn sảng khoái' },
+                { id: 3, name: 'Kinh Dị', desc: 'Thót tim và hồi hộp' },
+                { id: 4, name: 'Viễn Tưởng', desc: 'Khám phá thế giới tương lai' },
+                { id: 5, name: 'Tình Cảm', desc: 'Cảm xúc ngọt ngào sâu lắng' },
+                { id: 6, name: 'Phiêu Lưu', desc: 'Hành trình kỳ thú khắp nơi' },
+                { id: 7, name: 'Hoạt Hình', desc: 'Những câu chuyện hoạt hình dành cho mọi lứa tuổi' },
+                { id: 8, name: 'Tâm Lý', desc: 'Những câu chuyện về nội tâm và lựa chọn của con người' },
+                { id: 9, name: 'Chính Kịch', desc: 'Những câu chuyện đời sống giàu cảm xúc' }
+            ],
+            services: [
+                { id: 1, name: 'Bánh Mì Quẹt Sốt 50k', price: 50000, category: 'Đồ ăn', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&q=80&w=300' },
+                { id: 2, name: 'Super Combo Bắp + 2 Nước', price: 89000, category: 'Combo', image: 'https://images.unsplash.com/photo-1585647347385-253b8809f415?auto=format&fit=crop&q=80&w=300' },
+                { id: 3, name: 'Trà Mãng Cầu Thần Thánh', price: 45000, category: 'Đồ uống', image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&q=80&w=300' }
+            ],
+            invoices: [
+                { id: 'HDX01C6J', customer: 'Hồ Minh Tùng', staff: 'Hồ Minh Tùng', movie: 'Nụ hôn bạc tỷ', date: '2025-07-01 07:10', total: 130000, status: 'Đã thanh toán', seats: 'A1, A2' },
+                { id: 'HDX33SYS', customer: 'Đỗ Văn Đại', staff: 'Trần Văn Duyệt', movie: 'Nụ hôn bạc tỷ', date: '2025-06-30 19:10', total: 70000, status: 'Đã thanh toán', seats: 'B3' },
+                { id: 'HDG7MT8IS', customer: 'Trần Văn Duyệt', staff: 'Hồ Minh Tùng', movie: 'Nụ hôn bạc tỷ', date: '2025-08-29 15:10', total: 230000, status: 'Đã hủy', seats: 'C1, C2, C3' }
+            ],
+            news: [
+                { id: 1, title: 'Nhiều đánh giá tích cực về The Flash 2023 từ các nhà phê bình phim', date: '29/06/2025', image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&q=80&w=400', desc: 'Bộ phim The Flash năm 2023 nhận được nhiều đánh giá tích cực từ các nhà phê bình toàn cầu...' },
+                { id: 2, title: 'Review phim Dungeons & Dragons (Ngục tối và Rồng)', date: '29/06/2025', image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=400', desc: 'Cuộc phiêu lưu kỳ thú trong thế giới ma thuật đầy bất ngờ...' },
+                { id: 3, title: 'Review phim Everything Everywhere All At Once', date: '29/06/2025', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=400', desc: 'Bộ phim càn quét các giải thưởng Oscar mang lại góc nhìn đa vũ trụ...' }
+            ],
+            events: [
+                { id: 1, title: 'Bánh Mì Quẹt Sốt 50.000đ', date: '29/06/2025 - 29/07/2025', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&q=80&w=500', desc: 'Khám phá sự kiện hấp dẫn đang diễn ra tại các cụm rạp...' },
+                { id: 2, title: 'Super Plex - Trải nghiệm điện ảnh đỉnh cao', date: '29/06/2025 - 29/07/2025', image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=500', desc: 'Màn hình khổng lồ, âm thanh vòm Dolby Atmos chuẩn quốc tế...' },
+                { id: 3, title: 'Phòng Chiếu CineComfort & Charlotte', date: '29/06/2025 - 29/07/2025', image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=500', desc: 'Trải nghiệm xem phim với giường nằm cao cấp và sofa sang trọng...' }
+            ],
+            // Current booking session temp data
+            activeBooking: null
+        };
+
+        const app = {
+            state: defaultState,
+            heroCarouselIndex: 0,
+            heroCarouselTimer: null,
+            
+            init() {
+                this.generateVirtualShowtimes();
+                this.renderAuthNav();
+                this.switchView(this.state.currentView);
+            },
+
+            toggleTheme() {
+                const html = document.documentElement;
+                const icon = document.getElementById('theme-icon');
+                if (html.classList.contains('dark')) {
+                    html.classList.remove('dark');
+                    html.classList.add('light');
+                    icon.className = 'fa-solid fa-moon text-lg';
+                    this.state.currentTheme = 'light';
+                } else {
+                    html.classList.remove('dark');
+                    html.classList.add('dark');
+                    icon.className = 'fa-solid fa-sun text-lg text-yellow-400';
+                    this.state.currentTheme = 'dark';
+                }
+            },
+
+            switchView(viewName, param = null) {
+                if (this.heroCarouselTimer) {
+                    clearInterval(this.heroCarouselTimer);
+                    this.heroCarouselTimer = null;
+                }
+                if (viewName === 'admin' && param === 'roles' && (!this.state.currentUser || this.state.currentUser.role !== 'Quản lý')) {
+                    this.showToast('Chỉ tài khoản Admin mới có quyền truy cập chức vụ và phân quyền.', 'error');
+                    param = 'overview';
+                }
+                this.state.currentView = viewName;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const main = document.getElementById('app-main');
+                
+                // Update nav highlights
+                document.querySelectorAll('nav button').forEach(b => b.classList.remove('text-brand-600', 'font-semibold'));
+                
+                if (viewName === 'home') {
+                    main.innerHTML = this.renderHomeView();
+                } else if (viewName === 'movies') {
+                    main.innerHTML = this.renderMoviesView();
+                } else if (viewName === 'movie-detail') {
+                    main.innerHTML = this.renderMovieDetailView(param);
+                } else if (viewName === 'booking') {
+                    main.innerHTML = this.renderBookingView(param);
+                } else if (viewName === 'events') {
+                    main.innerHTML = this.renderEventsView();
+                } else if (viewName === 'news') {
+                    main.innerHTML = this.renderNewsView();
+                } else if (viewName === 'my-tickets') {
+                    main.innerHTML = this.renderMyTicketsView();
+                } else if (viewName === 'admin') {
+                    main.innerHTML = this.renderAdminDashboard(param || 'overview');
+                }
+                if (viewName === 'home') this.startHeroCarousel();
+            },
+
+            renderAuthNav() {
+                const container = document.getElementById('auth-container');
+                const user = this.state.currentUser;
+                
+                if (user) {
+                    let roleBadgeColor = 'bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300';
+                    if (user.role === 'Quản lý') roleBadgeColor = 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300';
+                    
+                    container.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <div class="text-right hidden lg:block">
+                                <div class="text-xs font-bold">${user.name}</div>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${roleBadgeColor}">${user.role}</span>
+                            </div>
+                            ${user.role === 'Quản lý' || user.role === 'Nhân viên' ? `
+                                <button onclick="app.switchView('admin')" class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-extrabold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center space-x-2 ring-2 ring-purple-300/70" title="Nhấn để mở trang quản trị">
+                                    <i class="fa-solid fa-gauge text-base"></i>
+                                    <span>Quản Trị</span>
+                                    <i class="fa-solid fa-arrow-pointer text-[10px] animate-pulse" aria-hidden="true"></i>
+                                </button>
+                            ` : ''}
+                            <button onclick="app.logout()" class="text-gray-500 hover:text-brand-600 p-2 rounded-lg transition" title="Đăng xuất">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <button onclick="app.openLoginModal()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition">
+                            Đăng Nhập
+                        </button>
+                    `;
+                }
+            },
+
+            renderHomeView() {
+                return `
+                    <div class="space-y-8 animate-fadeIn">
+                        <!-- Hero Banner Carousel / Slider -->
+                        <div class="relative rounded-2xl overflow-hidden shadow-2xl bg-gray-900 text-white min-h-[400px]">
+                            <div id="home-hero-slide" aria-live="polite">${this.renderHeroSlide()}</div>
+                            <button onclick="app.changeHeroSlide(-1)" aria-label="Phim trước" class="absolute z-20 left-3 md:left-5 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white w-10 h-10 rounded-full transition">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button onclick="app.changeHeroSlide(1)" aria-label="Phim tiếp theo" class="absolute z-20 right-3 md:right-5 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white w-10 h-10 rounded-full transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <div class="absolute z-20 bottom-4 right-5 flex gap-2" aria-label="Chọn phim">
+                                ${this.state.movies.map((movie, index) => `
+                                    <button onclick="app.goToHeroSlide(${index})" aria-label="Xem phim ${movie.title}" aria-current="${index === this.heroCarouselIndex ? 'true' : 'false'}" class="w-2.5 h-2.5 rounded-full transition ${index === this.heroCarouselIndex ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}"></button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Main Content Grid: Movies Left, News Sidebar Right -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Left: Featured Movies (2 Cols) -->
+                            <div class="lg:col-span-2 space-y-6">
+                                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
+                                    <h2 class="text-xl font-bold flex items-center space-x-2">
+                                        <i class="fa-solid fa-fire text-brand-600"></i>
+                                        <span>Phim Đang Chiếu & Sắp Chiếu</span>
+                                    </h2>
+                                    <button onclick="app.switchView('movies')" class="text-sm font-semibold text-brand-600 hover:underline">Xem Tất Cả &rarr;</button>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                                    ${this.state.movies.map(movie => `
+                                        <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col transition transform hover:-translate-y-1">
+                                            <div class="relative aspect-[2/3] bg-gray-950 overflow-hidden group cursor-pointer" onclick="app.switchView('movie-detail', ${movie.id})">
+                                                <img src="${movie.poster}" alt="${movie.title}" class="w-full h-full object-contain group-hover:scale-[1.02] transition duration-500">
+                                                <span class="absolute top-3 right-3 bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow">${movie.rating}</span>
+                                                <span class="absolute bottom-3 left-3 bg-black/70 backdrop-blur text-white text-xs px-2.5 py-1 rounded-md">${movie.duration} phút</span>
+                                            </div>
+                                            <div class="p-5 flex flex-col flex-grow justify-between space-y-4">
+                                                <div>
+                                                    <span class="text-xs font-semibold text-brand-600 uppercase">${movie.category}</span>
+                                                    <h3 class="font-bold text-lg mt-1 cursor-pointer hover:text-brand-600 transition" onclick="app.switchView('movie-detail', ${movie.id})">${movie.title}</h3>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${movie.desc}</p>
+                                                </div>
+                                                <div class="flex flex-col gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                                    <span class="text-xs text-gray-400">Khởi chiếu: ${movie.releaseDate}</span>
+                                                    <button onclick="app.switchView('movie-detail', ${movie.id})" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold px-5 py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
+                                                        <i class="fa-solid fa-ticket"></i>
+                                                        Đặt Vé
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Right: Tin Mới Nhất Sidebar (Matching Video) -->
+                            <div class="space-y-6">
+                                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+                                    <h3 class="font-bold text-lg border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center space-x-2">
+                                        <i class="fa-solid fa-newspaper text-brand-600"></i>
+                                        <span>Tin Mới Nhất</span>
+                                    </h3>
+                                    <div class="space-y-4">
+                                        ${this.state.news.map(item => `
+                                            <div class="flex space-x-3 items-start group cursor-pointer pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0" onclick="app.openNewsModal(${item.id})">
+                                                <img src="${item.image}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:opacity-85 transition">
+                                                <div class="space-y-1">
+                                                    <span class="text-[10px] text-gray-400">${item.date}</span>
+                                                    <h4 class="text-xs font-bold leading-snug group-hover:text-brand-600 transition line-clamp-2">${item.title}</h4>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Promo Event Banner -->
+                                <div class="bg-gradient-to-br from-brand-600 to-brand-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                                    <div class="relative z-10 space-y-3">
+                                        <span class="bg-white/20 text-xs font-bold px-3 py-1 rounded-full uppercase">Ưu Đãi Đặc Biệt</span>
+                                        <h3 class="font-bold text-xl">Bánh Mì Quẹt Sốt 50.000đ</h3>
+                                        <p class="text-xs text-brand-100">Thưởng thức Combo ẩm thực độc quyền tại rạp ngay hôm nay.</p>
+                                        <button onclick="app.switchView('events')" class="bg-white text-brand-700 hover:bg-brand-50 text-xs font-bold px-4 py-2 rounded-lg shadow transition">
+                                            Khám Phá Ngay
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderHeroSlide() {
+                const movie = this.state.movies[this.heroCarouselIndex] || this.state.movies[0];
+                if (!movie) return '';
+
+                return `
+                    <div class="relative min-h-[400px] flex items-center animate-fadeIn">
+                        <img src="${movie.poster}" alt="${movie.title}" class="absolute inset-0 z-0 w-full h-full object-cover object-center opacity-50">
+                        <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/20 z-10"></div>
+                        <div class="relative z-10 p-8 md:p-12 max-w-2xl space-y-4 ml-10 md:ml-14 mr-12">
+                            <span class="bg-brand-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">${movie.status} · ${movie.releaseDate}</span>
+                            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">${movie.title}</h1>
+                            <p class="text-gray-300 text-sm md:text-base leading-relaxed">${movie.desc}</p>
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button onclick="app.switchView('movie-detail', ${movie.id})" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center space-x-2">
+                                    <i class="fa-solid fa-ticket"></i>
+                                    <span>Xem Phim</span>
+                                </button>
+                                <button onclick="app.switchView('events')" class="bg-white/10 hover:bg-white/20 backdrop-blur text-white font-semibold px-6 py-3 rounded-xl transition">
+                                    Xem Ưu Đãi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            updateHeroSlide() {
+                const slide = document.getElementById('home-hero-slide');
+                if (!slide) return;
+
+                slide.innerHTML = this.renderHeroSlide();
+                const indicators = slide.parentElement.querySelectorAll('[aria-label="Chọn phim"] button');
+                indicators.forEach((button, index) => {
+                    const isCurrent = index === this.heroCarouselIndex;
+                    button.setAttribute('aria-current', String(isCurrent));
+                    button.className = `w-2.5 h-2.5 rounded-full transition ${isCurrent ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`;
+                });
+            },
+
+            changeHeroSlide(direction) {
+                const movieCount = this.state.movies.length;
+                if (!movieCount) return;
+
+                this.heroCarouselIndex = (this.heroCarouselIndex + direction + movieCount) % movieCount;
+                this.updateHeroSlide();
+            },
+
+            goToHeroSlide(index) {
+                if (index < 0 || index >= this.state.movies.length) return;
+                this.heroCarouselIndex = index;
+                this.updateHeroSlide();
+            },
+
+            startHeroCarousel() {
+                if (this.state.movies.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+                this.heroCarouselTimer = setInterval(() => {
+                    this.changeHeroSlide(1);
+                }, 5000);
+            },
+
+            renderMoviesView() {
+                return `
+                    <div class="space-y-6 animate-fadeIn">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-extrabold">Danh Sách Phim Chiếu Rạp</h1>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Chọn phim bạn yêu thích và đặt vé ngay hôm nay</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="text" id="movie-search" oninput="app.filterMovies()" placeholder="Tìm tên phim, đạo diễn..." class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm px-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <button onclick="app.filterMovies()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm px-4 py-2 rounded-xl shadow transition">Tìm</button>
+                            </div>
+                        </div>
+
+                        <div id="movies-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                            ${this.state.movies.map(movie => `
+                                <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col">
+                                    <div class="relative aspect-[2/3] bg-gray-950 cursor-pointer group" onclick="app.switchView('movie-detail', ${movie.id})">
+                                        <img src="${movie.poster}" alt="${movie.title}" class="w-full h-full object-contain group-hover:scale-[1.02] transition duration-500">
+                                        <span class="absolute top-3 right-3 bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-md">${movie.rating}</span>
+                                    </div>
+                                    <div class="p-4 flex flex-col flex-grow justify-between space-y-3">
+                                        <div>
+                                            <span class="text-[10px] font-bold text-brand-600 uppercase">${movie.category}</span>
+                                            <h3 class="font-bold text-base mt-1 cursor-pointer hover:text-brand-600 transition" onclick="app.switchView('movie-detail', ${movie.id})">${movie.title}</h3>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Đạo diễn: ${movie.director}</p>
+                                        </div>
+                                        <button onclick="app.switchView('movie-detail', ${movie.id})" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold py-3.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-ticket"></i>
+                                            Xem Suất Chiếu & Đặt Vé
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderMovieDetailView(movieId) {
+                const movie = this.state.movies.find(m => m.id === movieId) || this.state.movies[0];
+                const showtimes = this.state.showtimes.filter(s => s.movieId === movie.id);
+
+                return `
+                    <div class="space-y-8 animate-fadeIn">
+                        <div class="flex items-center justify-between">
+                            <button onclick="app.switchView('movies')" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                <span>Quay Lại Danh Sách Phim</span>
+                            </button>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-xl border border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="relative aspect-[2/3] w-full max-w-sm mx-auto rounded-2xl overflow-hidden shadow-2xl bg-gray-950">
+                                <img src="${movie.poster}" alt="${movie.title}" class="w-full h-full object-contain">
+                                <span class="absolute top-4 right-4 bg-brand-600 text-white text-sm font-bold px-3 py-1.5 rounded-lg">${movie.rating}</span>
+                            </div>
+                            <div class="md:col-span-2 space-y-4 flex flex-col justify-between">
+                                <div class="space-y-3">
+                                    <span class="bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300 text-xs font-bold px-3 py-1 rounded-full">${movie.category}</span>
+                                    <h1 class="text-3xl font-extrabold">${movie.title}</h1>
+                                    <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">${movie.desc}</p>
+                                    <div class="grid grid-cols-2 gap-4 pt-2 text-sm">
+                                        <div><span class="text-gray-400">Đạo diễn:</span> <strong class="ml-1">${movie.director}</strong></div>
+                                        <div><span class="text-gray-400">Diễn viên:</span> <strong class="ml-1">${movie.cast}</strong></div>
+                                        <div><span class="text-gray-400">Thời lượng:</span> <strong class="ml-1">${movie.duration} phút</strong></div>
+                                        <div><span class="text-gray-400">Khởi chiếu:</span> <strong class="ml-1">${movie.releaseDate}</strong></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <h3 class="font-bold text-lg mb-3"><i class="fa-solid fa-clock text-brand-600 mr-2"></i>Chọn Suất Chiếu</h3>
+                                    ${showtimes.length > 0 ? `
+                                                        <div class="space-y-4">
+                                                            ${Array.from(new Set(showtimes.map(st => st.date).sort())).map(date => `
+                                                                <div>
+                                                                    <h4 class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">${new Date(`${date}T00:00:00`).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</h4>
+                                                                    <div class="flex flex-wrap gap-3">
+                                                                        ${showtimes.filter(st => st.date === date).sort((first, second) => first.time.localeCompare(second.time)).map(st => `
+                                                                            <button onclick="app.startBooking(${st.id})" class="bg-gray-100 dark:bg-gray-700 hover:bg-brand-600 hover:text-white border border-gray-200 dark:border-gray-600 px-4 py-2.5 rounded-xl font-bold text-sm transition flex flex-col items-center">
+                                                                                <span>${st.time}</span>
+                                                                                <span class="text-[10px] opacity-75">${st.room} - ${st.format}</span>
+                                                                            </button>
+                                                                        `).join('')}
+                                                                    </div>
+                                                                </div>
+                                                            `).join('')}
+                                                        </div>
+                                                    ` : `
+                                        <p class="text-sm text-gray-500 italic">Chưa có suất chiếu nào hôm nay. Vui lòng chọn phim khác hoặc quay lại sau.</p>
+                                        <button onclick="app.startBookingDefault(${movie.id})" class="mt-3 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                                            Tạo Suất Chiếu Nhanh & Đặt Vé
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            startBooking(showtimeId) {
+                const showtime = this.state.showtimes.find(s => s.id === showtimeId);
+                if (!showtime) {
+                    this.showToast('Không tìm thấy suất chiếu.', 'error');
+                    return;
+                }
+                const movie = this.state.movies.find(m => m.id === showtime.movieId);
+                if (!movie) {
+                    this.showToast('Không tìm thấy phim của suất chiếu này.', 'error');
+                    return;
+                }
+                this.state.activeBooking = {
+                    showtime,
+                    movie,
+                    selectedSeats: [],
+                    selectedCombo: null,
+                    totalPrice: 0
+                };
+                this.switchView('booking');
+            },
+
+            startBookingDefault(movieId) {
+                const movie = this.state.movies.find(m => m.id === movieId);
+                if (!movie) {
+                    this.showToast('Không tìm thấy phim để tạo suất chiếu nhanh.', 'error');
+                    return;
+                }
+                const date = this.state.showtimes.find(showtime => showtime.movieId === movie.id)?.date || movie.releaseDate;
+                const showtime = { id: 99, movieId: movie.id, room: 'Phòng 1', date, time: '19:30', format: '2D Phụ Đề', price: 75000 };
+                this.state.activeBooking = {
+                    showtime,
+                    movie,
+                    selectedSeats: [],
+                    selectedCombo: null,
+                    totalPrice: 0
+                };
+                this.switchView('booking');
+            },
+
+            renderBookingView() {
+                const booking = this.state.activeBooking;
+                if (!booking) return this.switchView('home');
+
+                const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
+                const cols = 8;
+                
+                return `
+                    <div class="space-y-8 animate-fadeIn max-w-4xl mx-auto">
+                        <div class="flex items-center justify-between">
+                            <button onclick="app.switchView('movie-detail', ${booking.movie.id})" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                <span>Quay Lại Chi Tiết Phim</span>
+                            </button>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-xl border border-gray-100 dark:border-gray-700 space-y-6">
+                            <!-- Header Info -->
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 dark:border-gray-700 pb-4 gap-4">
+                                <div>
+                                    <span class="text-xs font-bold text-brand-600 uppercase">Đặt Vé Trực Tuyến</span>
+                                    <h2 class="text-2xl font-extrabold mt-1">${booking.movie.title}</h2>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${booking.showtime.room} | Ngày ${booking.showtime.date} | Suất: ${booking.showtime.time} | ${booking.showtime.format}</p>
+                                </div>
+                                <button onclick="app.switchView('movie-detail', ${booking.movie.id})" class="text-xs bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg font-semibold hover:bg-gray-200 transition">
+                                    &larr; Đổi Suất Chiếu
+                                </button>
+                            </div>
+
+                            <!-- Screen Bar -->
+                            <div class="space-y-2 text-center">
+                                <div class="w-full h-3 bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 rounded-full shadow-lg"></div>
+                                <span class="text-xs font-bold uppercase tracking-widest text-gray-400">Màn Hình Chiếu Phim</span>
+                            </div>
+
+                            <!-- Seats Grid -->
+                            <div class="py-4 overflow-x-auto">
+                                <div class="grid gap-3 justify-center min-w-[500px]">
+                                    ${rows.map(row => `
+                                        <div class="flex items-center space-x-2 justify-center">
+                                            <span class="w-6 text-xs font-bold text-gray-400">${row}</span>
+                                            <div class="flex space-x-2">
+                                                ${Array.from({length: cols}, (_, i) => {
+                                                    const seatId = `${row}${i+1}`;
+                                                    const isVIP = row === 'C' || row === 'D';
+                                                    const isBooked = (row === 'A' && i === 2) || (row === 'B' && i === 5);
+                                                    const isSelected = booking.selectedSeats.includes(seatId);
+                                                    
+                                                    let bg = 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-brand-100';
+                                                    if (isBooked) bg = 'bg-gray-300 dark:bg-gray-800 text-gray-400 cursor-not-allowed opacity-50';
+                                                    else if (isSelected) bg = 'bg-brand-600 text-white font-bold shadow-md scale-105';
+                                                    else if (isVIP) bg = 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-300';
+
+                                                    return `
+                                                        <button ${isBooked ? 'disabled' : ''} onclick="app.toggleSeat('${seatId}', ${isVIP ? 100000 : 75000})" class="w-10 h-10 rounded-xl text-xs font-semibold flex items-center justify-center transition transform ${bg}">
+                                                            ${seatId}
+                                                        </button>
+                                                    `;
+                                                }).join('')}
+                                            </div>
+                                            <span class="w-6 text-xs font-bold text-gray-400">${row}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Seat Legend -->
+                            <div class="flex flex-wrap justify-center gap-6 text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-gray-100 dark:bg-gray-700 border"></div><span>Thường (75.000đ)</span></div>
+                                <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-amber-100 border border-amber-300"></div><span>VIP (100.000đ)</span></div>
+                                <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-brand-600"></div><span>Đang chọn</span></div>
+                                <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-gray-300 opacity-50"></div><span>Đã đặt</span></div>
+                            </div>
+
+                            <!-- Booking Summary & Checkout Button -->
+                            <div class="bg-gray-50 dark:bg-gray-900 p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
+                                <div>
+                                    <p class="text-xs text-gray-400">Ghế đã chọn: <strong id="summary-seats" class="text-brand-600">${booking.selectedSeats.join(', ') || 'Chưa chọn ghế'}</strong></p>
+                                    <p class="text-lg font-extrabold mt-1">Tổng tiền: <span id="summary-total" class="text-brand-600">${booking.totalPrice.toLocaleString()} VNĐ</span></p>
+                                </div>
+                                <button onclick="app.completeBooking()" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-xl transition flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                    <span>Xác Nhận Thanh Toán</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            toggleSeat(seatId, price) {
+                const booking = this.state.activeBooking;
+                const idx = booking.selectedSeats.indexOf(seatId);
+                if (idx > -1) {
+                    booking.selectedSeats.splice(idx, 1);
+                    booking.totalPrice -= price;
+                } else {
+                    booking.selectedSeats.push(seatId);
+                    booking.totalPrice += price;
+                }
+                
+                // Re-render partial summary or whole view
+                document.getElementById('summary-seats').innerText = booking.selectedSeats.join(', ') || 'Chưa chọn ghế';
+                document.getElementById('summary-total').innerText = booking.totalPrice.toLocaleString() + ' VNĐ';
+                // Refresh seat buttons state simply by re-rendering
+                const main = document.getElementById('app-main');
+                main.innerHTML = this.renderBookingView();
+            },
+
+            completeBooking() {
+                const booking = this.state.activeBooking;
+                if (!booking || booking.selectedSeats.length === 0) {
+                    this.showToast('Vui lòng chọn ít nhất 1 ghế ngồi!', 'error');
+                    return;
+                }
+
+                const newInvoice = {
+                    id: 'HDX' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                    customer: this.state.currentUser ? this.state.currentUser.name : 'Khách vãng lai',
+                    staff: 'Online System',
+                    movie: booking.movie.title,
+                    date: new Date().toLocaleString(),
+                    total: booking.totalPrice,
+                    status: 'Đã thanh toán',
+                    seats: booking.selectedSeats.join(', ')
+                };
+
+                this.state.invoices.unshift(newInvoice);
+                this.showToast('Đặt vé thành công! Hóa đơn đã được lưu.', 'success');
+                this.switchView('my-tickets');
+            },
+
+            renderMyTicketsView() {
+                return `
+                    <div class="space-y-6 animate-fadeIn max-w-4xl mx-auto">
+                        <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <div>
+                                <h1 class="text-2xl font-extrabold">Lịch Sử Đặt Vé & Hóa Đơn</h1>
+                                <p class="text-xs text-gray-500">Quản lý các vé xem phim bạn đã đặt trên hệ thống</p>
+                            </div>
+                            <button onclick="app.switchView('movies')" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                                Đặt Vé Mới
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            ${this.state.invoices.map(inv => `
+                                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300 text-xs font-bold px-2.5 py-0.5 rounded-md">${inv.id}</span>
+                                            <span class="text-xs text-gray-400">${inv.date}</span>
+                                        </div>
+                                        <h3 class="font-bold text-lg">${inv.movie}</h3>
+                                        <p class="text-xs text-gray-500">Khách hàng: <strong>${inv.customer}</strong> ${inv.seats ? '| Ghế: ' + inv.seats : ''}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-end">
+                                        <div class="text-right">
+                                            <span class="text-xs text-gray-400">Tổng tiền</span>
+                                            <div class="font-extrabold text-brand-600">${inv.total.toLocaleString()} VNĐ</div>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${inv.status === 'Đã thanh toán' ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'}">
+                                            ${inv.status}
+                                        </span>
+                                        <button onclick="app.printTicket('${inv.id}')" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 p-2.5 rounded-xl transition" title="In vé">
+                                            <i class="fa-solid fa-print text-gray-600 dark:text-gray-300"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderEventsView() {
+                return `
+                    <div class="space-y-6 animate-fadeIn">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h1 class="text-2xl font-extrabold">Sự Kiện & Ưu Đãi Đang Diễn Ra</h1>
+                            <p class="text-xs text-gray-500">Khám phá các chương trình khuyến mãi, combo bắp nước và quà tặng hấp dẫn</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${this.state.events.map(ev => `
+                                <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col">
+                                    <div class="h-48 overflow-hidden">
+                                        <img src="${ev.image}" class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                                    </div>
+                                    <div class="p-5 flex flex-col flex-grow justify-between space-y-3">
+                                        <div class="space-y-2">
+                                            <span class="text-[10px] text-brand-600 font-bold bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded">${ev.date}</span>
+                                            <h3 class="font-bold text-lg">${ev.title}</h3>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">${ev.desc}</p>
+                                        </div>
+                                        <button onclick="app.showToast('Đã nhận ưu đãi thành công!', 'success')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold py-2.5 rounded-xl shadow transition">
+                                            Nhận Mã Ưu Đãi
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderNewsView() {
+                return `
+                    <div class="space-y-6 animate-fadeIn max-w-4xl mx-auto">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h1 class="text-2xl font-extrabold">Góc Điện Ảnh & Review Phim</h1>
+                            <p class="text-xs text-gray-500">Đánh giá phim chuyên sâu, tin tức điện ảnh mới nhất toàn cầu</p>
+                        </div>
+                        <div class="space-y-6">
+                            ${this.state.news.map(item => `
+                                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row gap-6 items-center">
+                                    <img src="${item.image}" class="w-full md:w-56 h-36 object-cover rounded-xl flex-shrink-0">
+                                    <div class="space-y-2 flex-grow">
+                                        <span class="text-xs text-brand-600 font-bold">${item.date}</span>
+                                        <h2 class="text-xl font-extrabold hover:text-brand-600 cursor-pointer transition">${item.title}</h2>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">${item.desc}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderAdminDashboard(subTab) {
+                return `
+                    <div class="space-y-6 animate-fadeIn">
+                        <!-- Admin Top Header Bar -->
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg border border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex items-center space-x-3">
+                                <span class="bg-purple-600 text-white font-bold px-3 py-1.5 rounded-xl text-sm">HK2TL ADMIN</span>
+                                <span class="text-xs text-gray-500 font-semibold">Xin chào, ${this.state.currentUser.name} (${this.state.currentUser.role})</span>
+                            </div>
+                            <!-- Admin Tabs Nav -->
+                            <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                                <button onclick="app.switchView('admin', 'overview')" class="px-3 py-2 rounded-lg ${subTab === 'overview' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-chart-pie mr-1"></i>Thống Kê</button>
+                                <button onclick="app.switchView('admin', 'movies')" class="px-3 py-2 rounded-lg ${subTab === 'movies' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-film mr-1"></i>Quản Lý Phim</button>
+                                <button onclick="app.switchView('admin', 'showtimes')" class="px-3 py-2 rounded-lg ${subTab === 'showtimes' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-calendar mr-1"></i>Lịch Chiếu</button>
+                                <button onclick="app.switchView('admin', 'rooms')" class="px-3 py-2 rounded-lg ${subTab === 'rooms' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-door-open mr-1"></i>Phòng & Ghế</button>
+                                <button onclick="app.switchView('admin', 'categories')" class="px-3 py-2 rounded-lg ${subTab === 'categories' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-tags mr-1"></i>Thể Loại</button>
+                                <button onclick="app.switchView('admin', 'staff')" class="px-3 py-2 rounded-lg ${subTab === 'staff' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-users mr-1"></i>Nhân Viên</button>
+                                <button onclick="app.switchView('admin', 'customers')" class="px-3 py-2 rounded-lg ${subTab === 'customers' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-user-group mr-1"></i>Khách Hàng</button>
+                                ${this.state.currentUser && this.state.currentUser.role === 'Quản lý' ? `<button onclick="app.switchView('admin', 'roles')" class="px-3 py-2 rounded-lg ${subTab === 'roles' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-shield-halved mr-1"></i>Chức Vụ & Phân Quyền</button>` : ''}
+                                <button onclick="app.switchView('admin', 'invoices')" class="px-3 py-2 rounded-lg ${subTab === 'invoices' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>Hóa Đơn</button>
+                                <button onclick="app.switchView('admin', 'services')" class="px-3 py-2 rounded-lg ${subTab === 'services' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}"><i class="fa-solid fa-burger mr-1"></i>Dịch Vụ</button>
+                            </div>
+                        </div>
+
+                        <!-- Admin Tab Body Content -->
+                        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+                            ${this.renderAdminSubContent(subTab)}
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderAdminSubContent(subTab) {
+                if (subTab === 'overview') {
+                    return `
+                        <div class="space-y-6">
+                            <h2 class="text-xl font-bold mb-4">Thống Kê Doanh Thu & Hoạt Động Rạp Chiếu</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <div class="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-2xl border border-brand-100 dark:border-brand-800">
+                                    <p class="text-xs text-gray-500 font-bold uppercase">Tổng Doanh Thu</p>
+                                    <h3 class="text-2xl font-extrabold text-brand-600 mt-2">${this.state.invoices.reduce((sum, inv) => inv.status === 'Đã thanh toán' ? sum + inv.total : sum, 0).toLocaleString()} VNĐ</h3>
+                                    <span class="text-xs text-green-600 font-semibold mt-1 inline-block">Cập nhật thời gian thực</span>
+                                </div>
+                                <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
+                                    <p class="text-xs text-gray-500 font-bold uppercase">Vé Đã Bán</p>
+                                    <h3 class="text-2xl font-extrabold text-blue-600 mt-2">${this.state.invoices.filter(i => i.status === 'Đã thanh toán').length * 2} Vé</h3>
+                                    <span class="text-xs text-blue-600 font-semibold mt-1 inline-block">Hệ thống ổn định</span>
+                                </div>
+                                <div class="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border border-amber-100 dark:border-amber-800">
+                                    <p class="text-xs text-gray-500 font-bold uppercase">Khách Hàng Đăng Ký</p>
+                                    <h3 class="text-2xl font-extrabold text-amber-600 mt-2">${this.state.virtualAccounts.length} User</h3>
+                                    <span class="text-xs text-amber-600 font-semibold mt-1 inline-block">Đầy đủ phân quyền</span>
+                                </div>
+                                <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-2xl border border-purple-100 dark:border-purple-800">
+                                    <p class="text-xs text-gray-500 font-bold uppercase">Phòng Chiếu</p>
+                                    <h3 class="text-2xl font-extrabold text-purple-600 mt-2">${this.state.rooms.length} Phòng</h3>
+                                    <span class="text-xs text-purple-600 font-semibold mt-1 inline-block">Hoạt động bình thường</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'movies') {
+                    return `
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-bold">Quản Lý Phim Chiếu Rạp</h3>
+                                <button onclick="app.openAddMovieModal()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                                    + Thêm Phim Mới
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-100 dark:bg-gray-700 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3">#</th>
+                                            <th class="p-3">Tên Phim</th>
+                                            <th class="p-3">Slug</th>
+                                            <th class="p-3">Khởi Chiếu</th>
+                                            <th class="p-3">Thời Lượng</th>
+                                            <th class="p-3">Đạo Diễn</th>
+                                            <th class="p-3 text-center">Hành Động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        ${this.state.movies.map((m, i) => `
+                                            <tr>
+                                                <td class="p-3 font-bold">${i+1}</td>
+                                                <td class="p-3 font-semibold">${m.title}</td>
+                                                <td class="p-3 text-xs text-gray-400">${m.slug}</td>
+                                                <td class="p-3">${m.releaseDate}</td>
+                                                <td class="p-3">${m.duration} phút</td>
+                                                <td class="p-3">${m.director}</td>
+                                                <td class="p-3 text-center space-x-2">
+                                                    <button onclick="app.editMovie(${m.id})" class="text-blue-600 hover:underline text-xs font-bold">Sửa</button>
+                                                    <button onclick="app.deleteMovie(${m.id})" class="text-red-600 hover:underline text-xs font-bold">Xóa</button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'showtimes') {
+                    return `
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-bold">Quản Lý Suất Chiếu & Lịch Chiếu Phim</h3>
+                                <button onclick="app.openAddShowtimeModal()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                                    + Tạo Lịch Chiếu
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-100 dark:bg-gray-700 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3">#</th>
+                                            <th class="p-3">Phim</th>
+                                            <th class="p-3">Phòng</th>
+                                            <th class="p-3">Giờ Bắt Đầu</th>
+                                            <th class="p-3">Định Dạng</th>
+                                            <th class="p-3">Giá Vé</th>
+                                            <th class="p-3">Trạng Thái</th>
+                                            <th class="p-3 text-center">Hành Động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        ${[...this.state.showtimes].sort((first, second) => first.date.localeCompare(second.date) || first.time.localeCompare(second.time)).map((st, i) => `
+                                            <tr>
+                                                <td class="p-3 font-bold">${i+1}</td>
+                                                <td class="p-3 font-semibold">${this.state.movies.find(movie => movie.id === st.movieId)?.title || 'Không rõ phim'}</td>
+                                                <td class="p-3 font-semibold">${st.room}</td>
+                                                <td class="p-3">${st.date} ${st.time}</td>
+                                                <td class="p-3">${st.format}</td>
+                                                <td class="p-3 font-bold text-brand-600">${st.price.toLocaleString()}đ</td>
+                                                <td class="p-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">${st.status}</span></td>
+                                                <td class="p-3 text-center">
+                                                    <button onclick="app.openEditShowtimeModal(${st.id})" class="text-blue-600 hover:underline text-xs font-bold">Cập nhật</button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'rooms') {
+                    return `
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-bold">Quản Lý Phòng Chiếu & Sơ Đồ Ghế</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                ${this.state.rooms.map(room => `
+                                    <div class="bg-gray-50 dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-2">
+                                        <div class="flex justify-between items-center">
+                                            <h4 class="font-bold text-base">${room.name}</h4>
+                                            <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">${room.status}</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500">Loại: ${room.type}</p>
+                                        <p class="text-xs text-gray-500">Tổng số ghế: <strong>${room.seats} ghế</strong></p>
+                                        <button onclick="app.openRoomSeatMapModal('${room.name}')" class="w-full mt-2 bg-brand-600 text-white text-xs font-bold py-2 rounded-lg">Xem Sơ Đồ Ghế</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'categories') {
+                    return `
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-bold">Quản Lý Thể Loại Phim</h3>
+                                <button onclick="app.openAddCategoryModal()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow">+ Thêm Thể Loại</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                ${this.state.categories.map(cat => `
+                                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                        <div>
+                                            <h4 class="font-bold text-sm">${cat.name}</h4>
+                                            <p class="text-xs text-gray-400 mt-1">${cat.desc}</p>
+                                        </div>
+                                        <button onclick="app.deleteCategory(${cat.id})" class="text-red-500 hover:text-red-700 text-xs" title="Xóa thể loại"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'staff') {
+                    return `
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-bold">Quản Lý Tài Khoản Nhân Viên</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-100 dark:bg-gray-700 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3">Họ Tên</th>
+                                            <th class="p-3">Email</th>
+                                            <th class="p-3">Số Điện Thoại</th>
+                                            <th class="p-3">Chức Vụ</th>
+                                            <th class="p-3">Trạng Thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        ${this.state.virtualAccounts.filter(acc => acc.role !== 'Khách hàng').map(acc => `
+                                            <tr>
+                                                <td class="p-3 font-semibold">${acc.name}</td>
+                                                <td class="p-3 text-xs text-gray-400">${acc.email}</td>
+                                                <td class="p-3">${acc.phone}</td>
+                                                <td class="p-3"><span class="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded font-bold">${acc.role}</span></td>
+                                                <td class="p-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">${acc.status}</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'customers') {
+                    return `
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-bold">Quản Lý Tài Khoản Khách Hàng</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-100 dark:bg-gray-700 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3">Họ Tên</th>
+                                            <th class="p-3">Email</th>
+                                            <th class="p-3">Số Điện Thoại</th>
+                                            <th class="p-3">Trạng Thái</th>
+                                            <th class="p-3 text-center">Thao Tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        ${this.state.virtualAccounts.filter(acc => acc.role === 'Khách hàng' || acc.id === 6).map(acc => `
+                                            <tr>
+                                                <td class="p-3 font-semibold">${acc.name}</td>
+                                                <td class="p-3 text-xs text-gray-400">${acc.email}</td>
+                                                <td class="p-3">${acc.phone}</td>
+                                                <td class="p-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Đã kích hoạt</span></td>
+                                                <td class="p-3 text-center">
+                                                    <button onclick="app.showToast('Đã khóa tài khoản khách hàng thành công', 'success')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded">Khóa</button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'roles') {
+                    return `
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-bold">Hệ Thống Chức Vụ & Cấp Quyền Nhân Viên</h3>
+                            <p class="text-xs text-gray-500">Chọn từng nhân viên dưới đây để xem danh sách quyền hạn và cấp/thu hồi quyền.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-gray-50 dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3">
+                                    <h4 class="font-bold text-sm text-brand-600 uppercase">Danh Sách Nhân Viên & Vai Trò</h4>
+                                    <div class="space-y-2">
+                                        ${this.state.virtualAccounts.filter(acc => acc.role !== 'Khách hàng').map(acc => `
+                                            <div onclick="app.selectStaffForPermission(${acc.id})" class="p-3 bg-white dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-brand-50 transition border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                                <div>
+                                                    <h5 class="font-bold text-sm">${acc.name}</h5>
+                                                    <span class="text-xs text-brand-600 font-semibold">${acc.role}</span>
+                                                </div>
+                                                <span class="text-xs text-gray-400">Xem quyền &rarr;</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div id="permission-detail-box" class="bg-gray-50 dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3">
+                                    <h4 class="font-bold text-sm text-brand-600 uppercase">Quyền Hạn Của Nhân Viên</h4>
+                                    <p class="text-xs text-gray-400 italic">Hãy chọn nhân viên bên trái để cấu hình quyền hạn.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'invoices') {
+                    const totalRevenue = this.state.invoices.reduce((sum, inv) => inv.status === 'Đã thanh toán' ? sum + inv.total : sum, 0);
+                    return `
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-bold">Quản Lý Hóa Đơn Chi Tiết</h3>
+                                <div class="bg-brand-50 dark:bg-brand-900/30 border border-brand-200 px-4 py-2 rounded-xl">
+                                    <span class="text-xs text-gray-500">Tổng Chi Phí / Doanh Thu:</span>
+                                    <span class="text-base font-extrabold text-brand-600 ml-2">${totalRevenue.toLocaleString()} VNĐ</span>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-100 dark:bg-gray-700 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3">Mã Hóa Đơn</th>
+                                            <th class="p-3">Khách Hàng</th>
+                                            <th class="p-3">Nhân Viên</th>
+                                            <th class="p-3">Phim</th>
+                                            <th class="p-3">Ngày Chiếu</th>
+                                            <th class="p-3">Ghế</th>
+                                            <th class="p-3">Tổng Tiền</th>
+                                            <th class="p-3">Trạng Thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        ${this.state.invoices.map(inv => `
+                                            <tr>
+                                                <td class="p-3 font-bold text-brand-600">${inv.id}</td>
+                                                <td class="p-3">${inv.customer}</td>
+                                                <td class="p-3 text-gray-500">${inv.staff}</td>
+                                                <td class="p-3 font-semibold">${inv.movie}</td>
+                                                <td class="p-3 text-xs text-gray-400">${inv.date}</td>
+                                                <td class="p-3 text-xs font-bold text-amber-600">${inv.seats || 'N/A'}</td>
+                                                <td class="p-3 font-extrabold">${inv.total.toLocaleString()}đ</td>
+                                                <td class="p-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">${inv.status}</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (subTab === 'services') {
+                    return `
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-bold">Quản Lý Dịch Vụ / Đồ Ăn (Bắp Nước, Combo)</h3>
+                                <button onclick="app.openAddServiceModal()" class="bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">+ Thêm Dịch Vụ</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                ${this.state.services.map(srv => `
+                                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-2 relative">
+                                        <button onclick="app.deleteService(${srv.id})" class="absolute top-6 right-6 bg-red-600 text-white w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shadow" title="Xóa dịch vụ">&times;</button>
+                                        <img src="${srv.image}" class="w-full h-32 object-cover rounded-xl">
+                                        <h4 class="font-bold text-sm">${srv.name}</h4>
+                                        <p class="text-xs font-extrabold text-brand-600">${srv.price.toLocaleString()}đ</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                return `<div>Đang tải module...</div>`;
+            },
+
+            filterMovies() {
+                const normalizeSearchText = value => value
+                    .toLocaleLowerCase('vi')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/đ/g, 'd')
+                    .trim();
+                const keyword = normalizeSearchText(document.getElementById('movie-search').value);
+                const filtered = this.state.movies.filter(m => 
+                    normalizeSearchText(m.title).includes(keyword) || 
+                    normalizeSearchText(m.director).includes(keyword) ||
+                    normalizeSearchText(m.category).includes(keyword)
+                );
+                
+                const grid = document.getElementById('movies-grid');
+                if (!grid) return;
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500">Không tìm thấy bộ phim phù hợp với từ khóa "${keyword}".</div>`;
+                    return;
+                }
+
+                grid.innerHTML = filtered.map(movie => `
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col">
+                        <div class="relative aspect-[2/3] bg-gray-950 cursor-pointer group" onclick="app.switchView('movie-detail', ${movie.id})">
+                            <img src="${movie.poster}" alt="${movie.title}" class="w-full h-full object-contain group-hover:scale-[1.02] transition duration-500">
+                            <span class="absolute top-3 right-3 bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-md">${movie.rating}</span>
+                        </div>
+                        <div class="p-4 flex flex-col flex-grow justify-between space-y-3">
+                            <div>
+                                <span class="text-[10px] font-bold text-brand-600 uppercase">${movie.category}</span>
+                                <h3 class="font-bold text-base mt-1 cursor-pointer hover:text-brand-600 transition" onclick="app.switchView('movie-detail', ${movie.id})">${movie.title}</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Đạo diễn: ${movie.director}</p>
+                            </div>
+                            <button onclick="app.switchView('movie-detail', ${movie.id})" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold py-3.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-ticket"></i>
+                                Xem Suất Chiếu & Đặt Vé
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            openEditShowtimeModal(showtimeId) {
+                const showtime = this.state.showtimes.find(item => item.id === showtimeId);
+                if (!showtime) {
+                    this.showToast('Không tìm thấy suất chiếu cần cập nhật.', 'error');
+                    return;
+                }
+
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-lg font-bold text-brand-600"><i class="fa-solid fa-calendar mr-2"></i>Cập Nhật Suất Chiếu</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="font-bold block mb-1">Phim</label>
+                                <select id="edit-showtime-movie" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                    ${this.state.movies.map(movie => `<option value="${movie.id}" ${movie.id === showtime.movieId ? 'selected' : ''}>${movie.title}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="font-bold block mb-1">Phòng Chiếu</label>
+                                <select id="edit-showtime-room" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                    ${this.state.rooms.map(room => `<option value="${room.name}" ${room.name === showtime.room ? 'selected' : ''}>${room.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="font-bold block mb-1">Ngày Chiếu</label>
+                                    <input type="date" id="edit-showtime-date" value="${showtime.date}" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                                <div>
+                                    <label class="font-bold block mb-1">Giờ Bắt Đầu</label>
+                                    <input type="time" id="edit-showtime-time" value="${showtime.time}" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="font-bold block mb-1">Định Dạng</label>
+                                    <input type="text" id="edit-showtime-format" value="${showtime.format}" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                                <div>
+                                    <label class="font-bold block mb-1">Giá Vé (VNĐ)</label>
+                                    <input type="number" id="edit-showtime-price" min="1" value="${showtime.price}" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="font-bold block mb-1">Trạng Thái</label>
+                                <select id="edit-showtime-status" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                    ${['Sắp chiếu', 'Đang chiếu', 'Đã chiếu', 'Đã hủy'].map(status => `<option value="${status}" ${status === showtime.status ? 'selected' : ''}>${status}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="text-right pt-2">
+                                <button onclick="app.submitShowtimeUpdate(${showtime.id})" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2.5 rounded-xl shadow">Lưu Cập Nhật</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            openAddShowtimeModal() {
+                if (!this.state.movies.length || !this.state.rooms.length) {
+                    this.showToast('Cần có ít nhất một phim và một phòng chiếu để tạo lịch.', 'error');
+                    return;
+                }
+
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                const today = new Date();
+                today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+                const todayValue = today.toISOString().slice(0, 10);
+                const firstMovie = this.state.movies[0];
+                const defaultDate = firstMovie.releaseDate > todayValue ? firstMovie.releaseDate : todayValue;
+
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-lg font-bold text-brand-600"><i class="fa-solid fa-calendar-plus mr-2"></i>Tạo Lịch Chiếu</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label for="new-showtime-movie" class="font-bold block mb-1">Chọn Phim</label>
+                                <select id="new-showtime-movie" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                    ${this.state.movies.map(movie => `<option value="${movie.id}">${movie.title} (khởi chiếu ${movie.releaseDate})</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="new-showtime-room" class="font-bold block mb-1">Phòng Chiếu</label>
+                                <select id="new-showtime-room" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                    ${this.state.rooms.map(room => `<option value="${room.name}">${room.name} - ${room.type}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="new-showtime-date" class="font-bold block mb-1">Ngày Chiếu</label>
+                                    <input type="date" id="new-showtime-date" min="${firstMovie.releaseDate}" value="${defaultDate}" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                                <div>
+                                    <label for="new-showtime-time" class="font-bold block mb-1">Giờ Bắt Đầu</label>
+                                    <input type="time" id="new-showtime-time" value="19:00" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="new-showtime-format" class="font-bold block mb-1">Định Dạng</label>
+                                    <select id="new-showtime-format" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                        <option>2D</option>
+                                        <option>2D Phụ Đề</option>
+                                        <option>2D Lồng Tiếng</option>
+                                        <option>IMAX 3D</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="new-showtime-price" class="font-bold block mb-1">Giá Vé (VNĐ)</label>
+                                    <input type="number" id="new-showtime-price" min="1" value="75000" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                            </div>
+                            <div class="text-right pt-2">
+                                <button onclick="app.submitNewShowtime()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2.5 rounded-xl shadow">Lưu Lịch Chiếu</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            submitNewShowtime() {
+                const movieId = Number(document.getElementById('new-showtime-movie').value);
+                const room = document.getElementById('new-showtime-room').value;
+                const date = document.getElementById('new-showtime-date').value;
+                const time = document.getElementById('new-showtime-time').value;
+                const format = document.getElementById('new-showtime-format').value.trim();
+                const price = Number(document.getElementById('new-showtime-price').value);
+                const movie = this.state.movies.find(item => item.id === movieId);
+
+                if (!movie || !this.state.rooms.some(item => item.name === room) || !date || !/^\d{2}:\d{2}$/.test(time) || !format || !Number.isFinite(price) || price <= 0) {
+                    this.showToast('Vui lòng chọn phim, phòng và nhập ngày giờ cùng giá vé hợp lệ.', 'error');
+                    return;
+                }
+                if (date < movie.releaseDate) {
+                    this.showToast(`Ngày chiếu không thể trước ngày khởi chiếu ${movie.releaseDate}.`, 'error');
+                    return;
+                }
+                if (this.state.showtimes.some(item => item.room === room && item.date === date && item.time === time)) {
+                    this.showToast('Phòng này đã có suất chiếu vào ngày và giờ đã chọn.', 'error');
+                    return;
+                }
+
+                const nextId = this.state.showtimes.reduce((maxId, item) => Math.max(maxId, Number(item.id) || 0), 0) + 1;
+                const today = new Date();
+                today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+                const todayValue = today.toISOString().slice(0, 10);
+                this.state.showtimes.push({
+                    id: nextId,
+                    movieId,
+                    room,
+                    date,
+                    time,
+                    format,
+                    price,
+                    status: date === todayValue ? 'Đang chiếu' : 'Sắp chiếu'
+                });
+
+                this.closeModal();
+                this.showToast(`Đã tạo suất chiếu phim "${movie.title}" lúc ${time} ngày ${date}.`, 'success');
+                this.switchView('admin', 'showtimes');
+            },
+
+            generateVirtualShowtimes() {
+                if (!this.state.movies.length || !this.state.rooms.length) {
+                    return { created: 0, failed: true };
+                }
+
+                const timeSlots = ['10:00', '12:30', '15:00', '17:30', '20:00', '22:15'];
+                const occupiedRoomTimes = new Set(this.state.showtimes.map(showtime => `${showtime.room}|${showtime.date}|${showtime.time}`));
+                const occupiedMovieTimes = new Set(this.state.showtimes.map(showtime => `${showtime.movieId}|${showtime.date}|${showtime.time}`));
+                let nextId = this.state.showtimes.reduce((maxId, showtime) => Math.max(maxId, Number(showtime.id) || 0), 0) + 1;
+                let created = 0;
+                let failed = false;
+
+                const formatDate = date => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                const tomorrow = new Date();
+                tomorrow.setHours(0, 0, 0, 0);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                this.state.movies.forEach((movie, movieIndex) => {
+                    const releaseDate = new Date(`${movie.releaseDate}T00:00:00`);
+                    if (Number.isNaN(releaseDate.getTime())) {
+                        failed = true;
+                        return;
+                    }
+                    const firstShowDate = releaseDate > tomorrow ? releaseDate : tomorrow;
+
+                    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+                        const showDate = new Date(firstShowDate);
+                        showDate.setDate(showDate.getDate() + dayOffset);
+                        const date = formatDate(showDate);
+                        const existingCount = this.state.showtimes.filter(showtime => showtime.movieId === movie.id && showtime.date === date).length;
+                        let slotsToCreate = Math.max(0, 3 - existingCount);
+
+                        for (let slotOffset = 0; slotOffset < 3 && slotsToCreate > 0; slotOffset++) {
+                            const initialSlot = (movieIndex * 3 + slotOffset) % (this.state.rooms.length * timeSlots.length);
+                            let createdSlot = false;
+
+                            for (let attempt = 0; attempt < this.state.rooms.length * timeSlots.length; attempt++) {
+                                const candidateIndex = (initialSlot + attempt) % (this.state.rooms.length * timeSlots.length);
+                                const room = this.state.rooms[Math.floor(candidateIndex / timeSlots.length)];
+                                const time = timeSlots[candidateIndex % timeSlots.length];
+                                const roomTimeKey = `${room.name}|${date}|${time}`;
+                                const movieTimeKey = `${movie.id}|${date}|${time}`;
+                                if (occupiedRoomTimes.has(roomTimeKey) || occupiedMovieTimes.has(movieTimeKey)) continue;
+
+                                const isImax = room.type.toLocaleLowerCase().includes('imax');
+                                this.state.showtimes.push({
+                                    id: nextId++,
+                                    movieId: movie.id,
+                                    room: room.name,
+                                    date,
+                                    time,
+                                    format: isImax ? 'IMAX 3D' : '2D',
+                                    price: isImax ? 120000 : 75000,
+                                    status: 'Sắp chiếu'
+                                });
+                                occupiedRoomTimes.add(roomTimeKey);
+                                occupiedMovieTimes.add(movieTimeKey);
+                                created++;
+                                slotsToCreate--;
+                                createdSlot = true;
+                                break;
+                            }
+
+                            if (!createdSlot) {
+                                failed = true;
+                                break;
+                            }
+                        }
+                    }
+                });
+
+                return { created, failed };
+            },
+
+            createVirtualShowtimes() {
+                const result = this.generateVirtualShowtimes();
+                if (result.failed) {
+                    this.showToast(`Đã tạo ${result.created} suất chiếu; một số suất chưa tạo được do thiếu ngày chiếu hoặc phòng trống.`, 'error');
+                } else if (result.created) {
+                    this.showToast(`Đã tạo ${result.created} suất chiếu ảo cho các phim trong 7 ngày.`, 'success');
+                } else {
+                    this.showToast('Lịch chiếu ảo đã có đủ suất cho 7 ngày tới.', 'success');
+                }
+                this.switchView('admin', 'showtimes');
+            },
+
+            submitShowtimeUpdate(showtimeId) {
+                const showtime = this.state.showtimes.find(item => item.id === showtimeId);
+                const movieId = Number(document.getElementById('edit-showtime-movie').value);
+                const room = document.getElementById('edit-showtime-room').value;
+                const date = document.getElementById('edit-showtime-date').value;
+                const time = document.getElementById('edit-showtime-time').value;
+                const format = document.getElementById('edit-showtime-format').value.trim();
+                const price = Number(document.getElementById('edit-showtime-price').value);
+
+                if (!showtime || !this.state.movies.some(movie => movie.id === movieId) || !room || !date || !time || !format || !Number.isFinite(price) || price <= 0) {
+                    this.showToast('Vui lòng nhập đầy đủ thông tin và giá vé hợp lệ.', 'error');
+                    return;
+                }
+
+                showtime.movieId = movieId;
+                showtime.room = room;
+                showtime.date = date;
+                showtime.time = time;
+                showtime.format = format;
+                showtime.price = price;
+                showtime.status = document.getElementById('edit-showtime-status').value;
+
+                this.closeModal();
+                this.showToast('Cập nhật suất chiếu thành công!', 'success');
+                this.switchView('admin', 'showtimes');
+            },
+
+            openAddCategoryModal() {
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-lg font-bold text-brand-600"><i class="fa-solid fa-tags mr-2"></i>Thêm Thể Loại</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="font-bold block mb-1">Tên Thể Loại</label>
+                                <input type="text" id="new-category-name" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="VD: Hoạt Hình">
+                            </div>
+                            <div>
+                                <label class="font-bold block mb-1">Mô Tả</label>
+                                <textarea id="new-category-desc" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" rows="3" placeholder="Mô tả thể loại phim..."></textarea>
+                            </div>
+                            <div class="text-right pt-2">
+                                <button onclick="app.submitNewCategory()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2.5 rounded-xl shadow">Thêm Thể Loại</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            submitNewCategory() {
+                const name = document.getElementById('new-category-name').value.trim();
+                const desc = document.getElementById('new-category-desc').value.trim();
+
+                if (!name) {
+                    this.showToast('Vui lòng nhập tên thể loại.', 'error');
+                    return;
+                }
+                if (this.state.categories.some(category => category.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+                    this.showToast('Thể loại này đã tồn tại.', 'error');
+                    return;
+                }
+
+                const nextId = this.state.categories.reduce((maxId, category) => Math.max(maxId, category.id), 0) + 1;
+                this.state.categories.push({ id: nextId, name, desc });
+                this.closeModal();
+                this.showToast(`Đã thêm thể loại "${name}".`, 'success');
+                this.switchView('admin', 'categories');
+            },
+
+            deleteCategory(categoryId) {
+                const category = this.state.categories.find(item => item.id === categoryId);
+                if (!category) {
+                    this.showToast('Không tìm thấy thể loại cần xóa.', 'error');
+                    return;
+                }
+
+                this.state.categories = this.state.categories.filter(item => item.id !== categoryId);
+                const fallbackCategory = this.state.categories.length ? this.state.categories[0].name : 'Chưa phân loại';
+                this.state.movies.forEach(movie => {
+                    if (movie.category === category.name) movie.category = fallbackCategory;
+                });
+                this.showToast(`Đã xóa thể loại "${category.name}".`, 'success');
+                this.switchView('admin', 'categories');
+            },
+
+            openAddMovieModal() {
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-lg font-bold text-brand-600"><i class="fa-solid fa-film mr-2"></i>Thêm Phim Mới</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="font-bold block mb-1">Tên Phim</label>
+                                <input type="text" id="new-movie-title" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="VD: Doraemon 2026">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="font-bold block mb-1">Thể Loại</label>
+                                    <input type="text" id="new-movie-cat" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="Hoạt Hình">
+                                </div>
+                                <div>
+                                    <label class="font-bold block mb-1">Thời Lượng (phút)</label>
+                                    <input type="number" id="new-movie-duration" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" value="110">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="font-bold block mb-1">Đạo Diễn</label>
+                                    <input type="text" id="new-movie-dir" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="Fujiko Fujio">
+                                </div>
+                                <div>
+                                    <label class="font-bold block mb-1">Độ Tuổi (Rating)</label>
+                                    <input type="text" id="new-movie-rating" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" value="P">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="font-bold block mb-1">Link Hình Ảnh (Poster URL)</label>
+                                <input type="text" id="new-movie-poster" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" value="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&q=80&w=600">
+                            </div>
+                            <div>
+                                <label class="font-bold block mb-1">Mô Tả Phim</label>
+                                <textarea id="new-movie-desc" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" rows="3" placeholder="Nhập mô tả phim..."></textarea>
+                            </div>
+                            <div class="text-right pt-2">
+                                <button onclick="app.submitNewMovie()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2.5 rounded-xl shadow">Xác Nhận Thêm Phim</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            submitNewMovie() {
+                const title = document.getElementById('new-movie-title').value;
+                const category = document.getElementById('new-movie-cat').value || 'Hành Động';
+                const duration = parseInt(document.getElementById('new-movie-duration').value) || 120;
+                const director = document.getElementById('new-movie-dir').value || 'Đang cập nhật';
+                const rating = document.getElementById('new-movie-rating').value || 'P';
+                const poster = document.getElementById('new-movie-poster').value || 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&q=80&w=600';
+                const desc = document.getElementById('new-movie-desc').value || 'Nội dung hấp dẫn đang chờ đón khán giả tại rạp.';
+
+                if (!title) {
+                    this.showToast('Vui lòng nhập tên phim!', 'error');
+                    return;
+                }
+
+                const newM = {
+                    id: this.state.movies.length + 1,
+                    title,
+                    slug: title.toLowerCase().replace(/ /g, '-'),
+                    releaseDate: '2026-07-01',
+                    duration,
+                    director,
+                    cast: 'Diễn viên nổi tiếng',
+                    category,
+                    desc,
+                    poster,
+                    status: 'Đang chiếu',
+                    rating
+                };
+
+                this.state.movies.push(newM);
+                this.closeModal();
+                this.showToast(`Thêm phim "${title}" thành công!`, 'success');
+                this.switchView('admin', 'movies');
+            },
+
+            deleteMovie(movieId) {
+                this.state.movies = this.state.movies.filter(m => m.id !== movieId);
+                this.showToast('Đã xóa phim thành công!', 'success');
+                this.switchView('admin', 'movies');
+            },
+
+            editMovie(movieId) {
+                this.showToast('Mở chế độ chỉnh sửa phim ID: ' + movieId, 'success');
+            },
+
+            openAddServiceModal() {
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-lg font-bold text-brand-600"><i class="fa-solid fa-burger mr-2"></i>Thêm Dịch Vụ Mới</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="font-bold block mb-1">Tên Dịch Vụ / Đồ Ăn</label>
+                                <input type="text" id="new-srv-name" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="VD: Combo Siêu Bắp 2 Người">
+                            </div>
+                            <div>
+                                <label class="font-bold block mb-1">Giá Tiền (VNĐ)</label>
+                                <input type="number" id="new-srv-price" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" value="79000">
+                            </div>
+                            <div>
+                                <label class="font-bold block mb-1">Link Hình Ảnh</label>
+                                <input type="text" id="new-srv-image" class="w-full p-2.5 border rounded-xl dark:bg-gray-700 dark:border-gray-600" value="https://images.unsplash.com/photo-1585647347385-253b8809f415?auto=format&fit=crop&q=80&w=300">
+                            </div>
+                            <div class="text-right pt-2">
+                                <button onclick="app.submitNewService()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2.5 rounded-xl shadow">Xác Nhận Thêm Dịch Vụ</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            submitNewService() {
+                const name = document.getElementById('new-srv-name').value;
+                const price = parseInt(document.getElementById('new-srv-price').value) || 50000;
+                const image = document.getElementById('new-srv-image').value || 'https://images.unsplash.com/photo-1585647347385-253b8809f415?auto=format&fit=crop&q=80&w=300';
+
+                if (!name) {
+                    this.showToast('Vui lòng nhập tên dịch vụ!', 'error');
+                    return;
+                }
+
+                this.state.services.push({
+                    id: this.state.services.length + 1,
+                    name,
+                    price,
+                    category: 'Combo',
+                    image
+                });
+
+                this.closeModal();
+                this.showToast(`Thêm dịch vụ "${name}" thành công!`, 'success');
+                this.switchView('admin', 'services');
+            },
+
+            deleteService(srvId) {
+                this.state.services = this.state.services.filter(s => s.id !== srvId);
+                this.showToast('Đã xóa dịch vụ thành công!', 'success');
+                this.switchView('admin', 'services');
+            },
+
+            openRoomSeatMapModal(roomName) {
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-lg font-bold text-brand-600"><i class="fa-solid fa-door-open mr-2"></i>Sơ Đồ Ghế - ${roomName}</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <p class="text-xs text-gray-500">Xem trực quan sơ đồ bố trí ghế ngồi tại ${roomName}:</p>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-3">
+                            <div class="w-full h-2 bg-brand-600 rounded-full mb-4"></div>
+                            <div class="grid grid-cols-6 gap-2 text-center text-xs">
+                                ${Array.from({length: 24}, (_, i) => `
+                                    <div class="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-bold">
+                                        Ghế ${i+1}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <button onclick="app.closeModal()" class="bg-brand-600 text-white text-xs font-bold px-4 py-2 rounded-xl">Đóng</button>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            selectStaffForPermission(staffId) {
+                const staff = this.state.virtualAccounts.find(a => a.id === staffId);
+                const box = document.getElementById('permission-detail-box');
+                if (!box || !staff) return;
+
+                const allPossiblePermissions = ['Xem phòng', 'Tạo phòng', 'Xóa phòng', 'Quản lý khách hàng', 'Quản lý phim', 'Xem hóa đơn', 'Thống kê doanh thu', 'Check-in vé', 'Check-in dịch vụ'];
+
+                box.innerHTML = `
+                    <h4 class="font-bold text-sm text-brand-600 uppercase">Phân Quyền Cho: ${staff.name} (${staff.role})</h4>
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        ${allPossiblePermissions.map(perm => {
+                            const hasPerm = staff.permissions && staff.permissions.includes(perm);
+                            return `
+                                <div class="p-2 bg-white dark:bg-gray-800 rounded-lg flex justify-between items-center text-xs">
+                                    <span>${perm}</span>
+                                    <button onclick="app.toggleStaffPermission(${staff.id}, '${perm}')" class="px-3 py-1 rounded font-bold text-white ${hasPerm ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-400 hover:bg-gray-500'}">
+                                        ${hasPerm ? 'Đã Cấp (Bấm hủy)' : 'Chưa cấp (Bấm cấp)'}
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            },
+
+            toggleStaffPermission(staffId, permName) {
+                const staff = this.state.virtualAccounts.find(a => a.id === staffId);
+                if (!staff) return;
+                if (!staff.permissions) staff.permissions = [];
+
+                const idx = staff.permissions.indexOf(permName);
+                if (idx > -1) {
+                    staff.permissions.splice(idx, 1);
+                    this.showToast(`Đã thu hồi quyền "${permName}" của ${staff.name}`, 'error');
+                } else {
+                    staff.permissions.push(permName);
+                    this.showToast(`Đã cấp quyền "${permName}" cho ${staff.name}`, 'success');
+                }
+                this.selectStaffForPermission(staffId);
+            },
+
+            toggleAccountsModal() {
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-lg font-bold text-brand-600"><i class="fa-solid fa-key mr-2"></i>Tài Khoản</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <p class="text-xs text-gray-500">Chọn nhanh tài khoản dưới đây để đăng nhập và trải nghiệm các phân quyền (Quản lý, Nhân viên, Kế toán, Khách hàng):</p>
+                        <div class="space-y-2 max-h-72 overflow-y-auto">
+                            ${this.state.virtualAccounts.map(acc => `
+                                <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-bold text-xs">${acc.name} (${acc.role})</h4>
+                                        <p class="text-[10px] text-gray-400">${acc.email} | Mật khẩu: ${acc.pass}</p>
+                                    </div>
+                                    <button onclick="app.loginAs(${acc.id})" class="bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow transition">
+                                        Đăng Nhập Ngay
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            openLoginModal() {
+                this.toggleAccountsModal();
+            },
+
+            loginAs(accountId) {
+                const acc = this.state.virtualAccounts.find(a => a.id === accountId);
+                if (acc) {
+                    this.state.currentUser = acc;
+                    this.renderAuthNav();
+                    this.closeModal();
+                    this.showToast(`Đăng nhập thành công với tư cách: ${acc.name} (${acc.role})`, 'success');
+                    if (acc.role === 'Quản lý' || acc.role === 'Nhân viên') {
+                        this.switchView('admin');
+                    } else {
+                        this.switchView('home');
+                    }
+                }
+            },
+
+            logout() {
+                this.state.currentUser = null;
+                this.renderAuthNav();
+                this.switchView('home');
+                this.showToast('Đã đăng xuất tài khoản', 'success');
+            },
+
+            closeModal() {
+                document.getElementById('modal-container').classList.add('hidden');
+            },
+
+            openNewsModal(newsId) {
+                const item = this.state.news.find(n => n.id === newsId);
+                const modal = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <h3 class="text-base font-bold">${item.title}</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        </div>
+                        <img src="${item.image}" class="w-full h-48 object-cover rounded-xl">
+                        <p class="text-xs text-gray-400">${item.date}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">${item.desc} Nội dung chi tiết bài viết được tổng hợp từ các chuyên gia điện ảnh hàng đầu, giúp khán giả có cái nhìn toàn diện về tác phẩm.</p>
+                        <div class="text-right">
+                            <button onclick="app.closeModal()" class="bg-brand-600 text-white text-xs font-bold px-4 py-2 rounded-xl">Đóng</button>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+
+            printTicket(invoiceId) {
+                this.showToast(`Đang kết nối máy in để xuất vé cho mã ${invoiceId}...`, 'success');
+            },
+
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `fixed bottom-6 left-6 z-50 px-5 py-3 rounded-xl shadow-2xl text-white text-xs font-bold flex items-center space-x-2 transition transform translate-y-10 opacity-0 ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`;
+                toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'} text-sm"></i><span>${message}</span>`;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-10', 'opacity-0');
+                }, 100);
+
+                setTimeout(() => {
+                    toast.classList.add('translate-y-10', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+
+        };
+
+        // Initialize application on window load
+        window.onload = function() {
+            app.init();
+        };
+    </script>
+</body>
+</html>
